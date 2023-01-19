@@ -1,0 +1,290 @@
+<style>
+    .center{
+        margin: auto;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+    .divBorder{
+        border: 1px solid #ccc!important;
+        padding: 8px 16px;
+        border-radius: 16px;
+    }
+
+    .centerPoll{
+        width: 60%;
+        margin: 0 auto;
+    }
+
+    p{
+        word-break: break-word;
+        margin: 2px 6px
+    }
+
+    a{
+        text-decoration:none;
+        color: inherit;
+    }
+
+    .overFlow{
+        overflow: hidden; 
+        padding: 5px;
+    }
+
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        padding-top: 60px; /* Location of the box */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+        /* Modal Content */
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #ccc!important;
+        width: 60%;
+        border-radius: 16px;
+        
+    }
+
+        /* The Close Button */
+    .close {
+        color: #aaaaaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        position: relative;
+        top: -8px;
+    }
+
+    .close:hover,.close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    textarea {
+        height: 262px;
+        flex: 1;
+    }
+
+    .liked {
+        background: dodgerblue;
+    }
+
+    .pagination{
+        display: inline-block;
+        padding-left: 0;
+        margin: 0px;
+    }
+
+    .pagination li a{
+        position: relative;
+        float: left;
+        padding: 2px 10px;
+        margin-left: -1px;
+        line-height: 1.42857143;
+        text-decoration: none;
+        border: 1px solid #ccc!important;
+        border-radius: 6px;
+    }
+
+    .pagination li{
+        display: inline;
+
+    }
+
+    .pagination li a:hover {
+        background-color: lightgray;
+    }
+
+    .pagination li a.active{
+        background-color: lightgray;
+    }
+
+    .pagination li a.disabled {
+        pointer-events: none;
+        cursor: default;
+    }
+
+</style>
+
+{% if user.is_authenticated %}
+
+    <script>
+        let currentCheckBox, previousCheckBox;
+
+        function getCookie(cname) {
+            let name = cname + "=";
+            let ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        async function checkPoll(id) {
+            let choice, vote;
+
+            if (document.getElementById(id).hasAttribute('data-custom')){
+                previousCheckBox = document.getElementById(document.getElementById(id).getAttribute('data-custom'));
+                document.getElementById(id).removeAttribute('data-custom');
+            }
+
+            try {
+                choice = document.querySelector('input[name="'+id+'"]:checked');
+                currentCheckBox = choice
+            }
+            catch(err) {
+                console.log("None Selected, "+err);
+            }
+
+            console.log(currentCheckBox);
+
+            if (!(choice))
+                return;
+
+            if ((await checkVoted(choice.value)) === true){
+                return;
+            }
+
+            if(currentCheckBox === previousCheckBox){
+                return;
+            }
+
+            if(previousCheckBox){
+                if(currentCheckBox.name === previousCheckBox.name){
+                    vote = document.getElementById("vote_"+previousCheckBox.value);
+                    vote.innerText = parseInt(vote.innerText) - 1;
+                }
+            }
+
+            vote = document.getElementById("vote_"+choice.value);
+            vote.innerText = parseInt(vote.innerText) + 1;
+
+            data = {
+                "question_id":choice.name,
+                "choice_id":choice.value,
+                "vote_count":parseInt(vote.innerText),
+            }
+
+            const response = await fetch("{% url 'updateVote' %}",{
+                method: 'POST',
+                credentials: "same-origin",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+
+            previousCheckBox = currentCheckBox;
+        }
+
+        async function checkVoted(id){
+
+            data = {
+                "choice_id":id
+            }
+
+            const response = await fetch("{% url 'checkVoted' %}",{
+                method: 'POST',
+                credentials: "same-origin",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+
+            data = await response.json();
+            return data['voted']
+        }
+
+    </script>
+
+    <div id="root" class="divBorder center">
+        <div class="overFlow">
+            <div style="float: left;">
+                Hello <span style="color: red;">{{request.user.username}}!</span>
+            </div>
+
+            <div style="float: right;">
+                <button type="button" name="logout" id="logout"><a href="/logout">Logout</a></button>
+            </div>
+        </div>
+
+        <div class="overFlow">
+            <div style="float: left;">
+                <button type="button" name="create-poll" id="create-poll"><a href="/createPoll">Create Poll</a></button>
+            </div>
+            <div style="float: right;">
+                <button type="button" name="my-messages" id="my-messages"><a href="/profile">Profile</a></button>
+            </div>
+        </div>
+
+        <div id="poll-box" class="divBorder">
+            Viewing all polls
+            <div class="centerPoll">
+                {% for question in poll %}
+                <div id="text" class="divBorder">
+                    <div class="overFlow">
+                        <div style="float: left;">
+                            <p>{{question.user}}</p>
+                        </div>
+                        <div style="float: right;">
+                            <p>
+                                {{question.pub_date}}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="divBorder">
+                        {{question.question_text}}:
+                        <div id="{{question.id}}" onclick="checkPoll(this.id)">
+                        {% for choice in question.choice_set.all %}                        
+                        <div class="overFlow">
+                            <div style="float: left;">
+                                <input type="radio" id="vt_{{choice.id}}" name="{{question.id}}" value="{{choice.id}}">
+                                {% if request.user.username in choice.voted_user %}
+                                    <script>
+                                        document.getElementById("vt_{{choice.id}}").checked = true;
+                                        document.getElementById("{{question.id}}").setAttribute("data-custom","vt_{{choice.id}}")
+                                    </script>
+                                {% else %} 
+                                {% endif %}
+                                <label for="{{choice.id}}">{{choice.choice_text}}</label><br>
+                            </div>
+                            <div style="float: right;" id="vote_{{choice.id}}">
+                                {{choice.votes}}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                <div id="index" style="text-align: center;"></div>
+            </div>    
+        </div>
+    </div>
+{% else %}
+    <p>Not Logged-in...</p>
+    <p class="text-center">Login, <button type="button" name="login" id="login"><a href="/login">Here</a></button></p>
+{% endif %}
