@@ -6,6 +6,7 @@ A poll application in which a user can create a poll and ask questions. Other us
 
 # Registration/Login page
 ## User can register new account
+![alt text](https://github.com/arshkhans/polls_project/blob/main/images/registerpage.png?raw=true)
 ## User can login into existing account
 
 # Homepage
