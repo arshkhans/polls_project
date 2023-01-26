@@ -18,3 +18,16 @@ app.autodiscover_tasks()
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
     print(f'Request: {self.request!r}')
+
+
+app.conf.beat_schedule = {
+    #Scheduler Name
+    'print-message-ten-seconds': {
+        # Task Name (Name Specified in Decorator)
+        'task': 'delete_record',  
+        # Schedule      
+        'schedule': 10.0,
+        # Function Arguments 
+        'args': () 
+    }
+}
