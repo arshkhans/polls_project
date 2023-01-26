@@ -12,6 +12,3 @@ def delete():
     current_time = datetime.now().replace(microsecond=0)
     questions = Question.objects.filter(pub_date__lt=current_time - timedelta(days=1))
     print(questions)
-
-
-
