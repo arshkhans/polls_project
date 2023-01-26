@@ -1,0 +1,5 @@
+docker run -d -p 6379:6379 redis
+
+celery -A polls_project beat -l info --logfile=celery.beat.log
+
+celery -A polls_project worker -l info --logfile=celery.log -P eventlet
