@@ -2,7 +2,7 @@
 A simple website for poll application using Django3.1 or higher
 
 # Description
-A poll application in which a user can create a poll and ask questions. Other users can give their answers as votes.
+A poll application, in which a user can create a poll and ask questions. Other users can give their answers as votes.
 
 # Registration/Login page
 ## User can register new account
